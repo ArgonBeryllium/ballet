@@ -1,0 +1,6 @@
+[submodule "src/shitrndr"]
+	path = src/shitrndr
+	url = https://github.com/ArgonBeryllium/shitrndr
+[submodule "src/huh"]
+	path = src/huh
+	url = https://gitlab.com/ar-be/huh.git
