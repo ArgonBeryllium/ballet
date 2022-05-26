@@ -85,6 +85,7 @@ struct Fondler
 	std::vector<Tickle*> effectors;
 	void update(float d, unsigned int iters = 1)
 	{
+		d /= iters;
 		for(unsigned int i = 0; i != iters; i++)
 		{
 			for(auto b : balls)
@@ -96,6 +97,9 @@ struct Fondler
 };
 
 inline float frand() { return float(std::rand()) / float(RAND_MAX); }
+
+constexpr bool FIX_PACE = false;
+constexpr float EXPECTED_FPS = 60, FIXED_STEP = 1/EXPECTED_FPS;
 
 int PS = 10;
 vec2<int> CP = {};
@@ -110,7 +114,7 @@ int main()
 	world.effectors.push_back(new ColliTickle);
 
 	using namespace shitrndr;
-	init("ballet demo", 480, 480, 1, 0, SDL_RENDERER_PRESENTVSYNC);
+	init("ballet demo", 480, 480, 1, 0);
 	silentDefs();
 	bg_col = {5,8,15,255};
 	onRender = [&world, lt](double d, double t)
@@ -123,13 +127,16 @@ int main()
 		if(Input::getMB(3))
 			lt->r = mp.getLength();
 
-		world.update(d, 1);
+		world.update(FIX_PACE?FIXED_STEP:d, 1);
 
 		SetColour({80,80,80});
 		FillCircle(lt->origin.x*PS+xo, lt->origin.y*PS+yo, lt->r*PS);
 		SetColour({255,150,150});
 		for(auto b : world.balls)
 			FillCircle(b->pos.x*PS+xo, b->pos.y*PS+yo, b->r*PS);
+
+		if(FIX_PACE && d < FIXED_STEP)
+			SDL_Delay(1000*(FIXED_STEP-d));
 	};
 	onKeyDown = [](const SDL_Keycode& k) { if(k==SDLK_q) std::exit(0); };
 	loop();
