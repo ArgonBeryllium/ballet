@@ -13,13 +13,14 @@ struct Ball
 	v2f acc;
 	float r;
 
-	Ball(const v2f& pos_ = {0,0}, float r_ = 1) : pos(pos_), p_pos(pos), r(r_) {}
+	Ball(const v2f& pos_ = {0,0}, float r_ = 1, const v2f& iv = {0,0}) :
+		pos(pos_), p_pos(pos-iv), r(r_) {}
 
 	void update(float d)
 	{
 		v2f dp = pos-p_pos;
 		p_pos = pos;
-		pos += dp + acc*d*d;
+		pos += dp + acc*d*d/2;
 		acc *= 0;
 	}
 
@@ -33,7 +34,7 @@ struct Tickle
 };
 struct GraviTickle : Tickle
 {
-	v2f g = {0, 8000};
+	v2f g = {0, 16000};
 
 	void apply(std::vector<Ball*>& balls, float d) override
 	{
@@ -98,7 +99,7 @@ struct Fondler
 
 inline float frand() { return float(std::rand()) / float(RAND_MAX); }
 
-constexpr bool FIX_PACE = false;
+constexpr bool FIX_PACE = true;
 constexpr float EXPECTED_FPS = 60, FIXED_STEP = 1/EXPECTED_FPS;
 
 int PS = 10;
