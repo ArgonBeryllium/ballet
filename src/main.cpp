@@ -79,6 +79,24 @@ struct ColliTickle : Tickle
 			}
 	}
 };
+struct SpringTickle : Tickle
+{
+	Ball* a, *b;
+	float target_length, force;
+
+	SpringTickle(Ball* a_, Ball* b_, float tl_ = 5, float force_ = 1) :
+		a(a_), b(b_), target_length(tl_), force(force_) {}
+
+	void apply(std::vector<Ball*>& balls, float d) override
+	{
+		v2f pd = b->pos-a->pos;
+		float pdl = pd.getLength();
+		float ld = pdl-target_length;
+		v2f t = (pd/pdl)*ld*force;
+		a->pos += t*d;
+		b->pos -= t*d;
+	}
+};
 
 struct Fondler
 {
@@ -107,12 +125,13 @@ vec2<int> CP = {};
 int main()
 {
 	Fondler world;
-	for(auto i = 32; i; i--)
+	for(auto i = 2; i; i--)
 		world.balls.push_back(new Ball(v2f(frand(), frand()), frand()+1));
 	world.effectors.push_back(new GraviTickle());
 	LimiTickle* lt = new LimiTickle();
 	world.effectors.push_back(lt);
 	world.effectors.push_back(new ColliTickle);
+	world.effectors.push_back(new SpringTickle(world.balls[0], world.balls[1]));
 
 	using namespace shitrndr;
 	init("ballet demo", 480, 480, 1, 0);
