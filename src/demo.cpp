@@ -19,7 +19,8 @@ int main()
 	World world;
 	for(auto i = 2; i; i--)
 		world.balls.push_back(new Ball(v2f(frand(), frand()), frand()+1));
-	world.effectors.push_back(new EffGravity());
+	world.balls.push_back(new Ball({0,9}, 5, 0));
+	//world.effectors.push_back(new EffGravity());
 	world.effectors.push_back(new EffCollision);
 	world.effectors.push_back(new EffSpring(world.balls[0], world.balls[1]));
 
@@ -33,7 +34,8 @@ int main()
 		int yo = WindowProps::getWidth()/2-CP.y;
 		v2f mp = vec2<int>(Input::getMP().x-xo, Input::getMP().y-yo).to<float>()/PS;
 		if(Input::getMB(1))
-			world.balls[0]->accelerate((mp-world.balls[0]->pos).normalised()*1000);
+			world.balls[0]->teleport(mp);
+			//world.balls[0]->accelerate((mp-world.balls[0]->pos).normalised()*1000);
 
 		world.update(FIX_PACE?FIXED_STEP:d, 1);
 
