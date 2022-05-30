@@ -40,12 +40,3 @@ void EffCollision::apply(std::vector<Ball *> &balls, float d)
 			}
 		}
 }
-void EffSpring::apply(std::vector<Ball *> &balls, float d)
-{
-	v2f pd = b->pos-a->pos;
-	float pdl = pd.getLength();
-	float ld = pdl-target_length;
-	v2f t = (pd/pdl)*ld*force;
-	a->pos += t*d;
-	b->pos -= t*d;
-}

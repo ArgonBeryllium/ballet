@@ -21,8 +21,8 @@ int main()
 		world.balls.push_back(new Ball(v2f(frand(), frand()), frand()+1));
 	world.balls.push_back(new Ball({0,9}, 5, 0));
 	//world.effectors.push_back(new EffGravity());
+	world.joints.push_back(new SpringJoint(world.balls[0], world.balls[1], 5, 3));
 	world.effectors.push_back(new EffCollision);
-	world.effectors.push_back(new EffSpring(world.balls[0], world.balls[1]));
 
 	using namespace shitrndr;
 	init("ballet demo", 480, 480, 1, 0);
