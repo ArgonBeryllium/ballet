@@ -1,10 +1,12 @@
 #include "ball.h"
 
+v2f Ball::getVel() const { return pos-p_pos; }
+
 void Ball::update(float d)
 {
-	v2f dp = pos-p_pos;
+	v2f vel = getVel();
 	p_pos = pos;
-	pos += dp + acc*d*d/2;
+	pos += vel + acc*d*d/2;
 	acc *= 0;
 }
 void Ball::accelerate(const v2f &a) { acc += a; }
