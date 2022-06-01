@@ -1,8 +1,8 @@
-#include <SDL2/SDL_render.h>
 #include <cstdlib>
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include "joints.h"
 #include "shitrndr/src/shitrndr.h"
 
 #include "ballet.h"
@@ -13,16 +13,34 @@ constexpr bool FIX_PACE = true;
 constexpr float EXPECTED_FPS = 60, FIXED_STEP = 1/EXPECTED_FPS;
 
 int PS = 10;
-vec2<int> CP = {};
+v2f CP = {0,0};
+inline vec2<int> toScreen(const v2f& p)
+{
+	using namespace shitrndr;
+	int xo = WindowProps::getWidth()/2 - CP.x*PS;
+	int yo = WindowProps::getHeight()/2 - CP.y*PS;
+	return (p*PS+vec2<int>(xo, yo)).to<int>();
+}
+inline v2f toSpace(const vec2<int>& p)
+{
+	using namespace shitrndr;
+	int xo = WindowProps::getWidth()/2 - CP.x*PS;
+	int yo = WindowProps::getHeight()/2 - CP.y*PS;
+	return (p-vec2<int>(xo, yo)).to<float>()/PS;
+}
+
 int main()
 {
 	World world;
-	for(auto i = 2; i; i--)
-		world.balls.push_back(new Ball(v2f(frand(), frand()), frand()+1));
-	world.balls.push_back(new Ball({0,9}, 5, 0));
-	//world.effectors.push_back(new EffGravity());
-	world.joints.push_back(new SpringJoint(world.balls[0], world.balls[1], 5, 3));
+	world.effectors.push_back(new EffGravity);
 	world.effectors.push_back(new EffCollision);
+
+	for(int i = 0; i != 12; i++)
+	{
+		Ball* b = new Ball(v2f{0, i*1.5f});
+		world.balls.push_back(b);
+		if(i) world.joints.push_back(new SpringJoint(b, world.balls[i-1], 2, 20));
+	}
 
 	using namespace shitrndr;
 	init("ballet demo", 480, 480, 1, 0);
@@ -30,18 +48,38 @@ int main()
 	bg_col = {5,8,15,255};
 	onRender = [&world](double d, double t)
 	{
-		int xo = WindowProps::getWidth()/2-CP.x;
-		int yo = WindowProps::getWidth()/2-CP.y;
-		v2f mp = vec2<int>(Input::getMP().x-xo, Input::getMP().y-yo).to<float>()/PS;
+		v2f mp = toSpace(Input::getMP());
+		world.balls[0]->teleport({std::sin(world.time), -2});
 		if(Input::getMB(1))
-			world.balls[0]->teleport(mp);
+			world.balls[world.balls.size()-1]->teleport(mp);
 			//world.balls[0]->accelerate((mp-world.balls[0]->pos).normalised()*1000);
 
 		world.update(FIX_PACE?FIXED_STEP:d, 1);
 
-		SetColour({255,150,150});
+		SetColour({255,150,150,255});
 		for(auto b : world.balls)
-			FillCircle(b->pos.x*PS+xo, b->pos.y*PS+yo, b->r*PS);
+		{
+			vec2<int> bp = toScreen(b->pos);
+			FillCircle(bp.x, bp.y, b->r*PS);
+		}
+		
+		for(auto j : world.joints)
+		{
+			auto sj = dynamic_cast<SpringJoint*>(j);
+			if(!j) continue;
+			vec2<int> pa = toScreen(sj->a->pos);
+			vec2<int> pb = toScreen(sj->b->pos);
+			SetColour({255,0,255,150});
+			SDL_RenderDrawLine(ren, pa.x, pa.y, pb.x, pb.y);
+
+			v2f m = (sj->a->pos + sj->b->pos)/2;
+			v2f n = (sj->a->pos - sj->b->pos).normalised(), t = {n.y, n.x};
+			pa = toScreen(m-n*sj->target_length/2)+t*10;
+			pb = toScreen(m+n*sj->target_length/2)+t*10;
+
+			SetColour({255,255,0,150});
+			SDL_RenderDrawLine(ren, pa.x, pa.y, pb.x, pb.y);
+		}
 
 		if(FIX_PACE && d < FIXED_STEP)
 			SDL_Delay(1000*(FIXED_STEP-d));
