@@ -4,7 +4,7 @@
 void EffGravity::apply(std::vector<Ball *> &balls, float d)
 {
 	for(auto b : balls)
-		b->accelerate(g*d);
+		b->accelerate(g);
 }
 void EffCollision::apply(std::vector<Ball *> &balls, float d)
 {
