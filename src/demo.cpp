@@ -34,6 +34,7 @@ struct Edge
 {
 	v2f a, b;
 	float r = 0;
+	float restitution = .5;
 	v2f dif() const { return b-a; }
 
 	void collide(Ball* ball)
@@ -43,11 +44,14 @@ struct Edge
 		float h = v2f::dot(pa,ba)/v2f::dot(ba,ba);
 		h = std::min(1.f, std::max(0.f, h));
 		v2f disp = pa - h*ba;
-		float dl = disp.getLength() - r;
+		float dl = disp.getLength();
 
-		if(dl >= ball->r) return;
+		if(dl-r >= ball->r) return;
 
-		ball->pos -= disp-(disp/dl * ball->r);
+		const v2f d = disp/dl * (ball->r - dl+r);
+
+		ball->teleport(ball->pos + d*(1-restitution));
+		ball->pos += d*restitution;
 	}
 };
 struct EffEdge : Effector
@@ -69,7 +73,7 @@ int main()
 	auto ee = new EffEdge;
 	world.effectors.push_back(ee);
 	ee->edges.push_back({{-3, 27}, {3, 27}, 2});
-	constexpr float a = 32, t = 4;
+	constexpr float a = 64, t = 32;
 	ee->edges.push_back({{-a,-a}, {a,-a}, t});
 	ee->edges.push_back({{-a,a}, {a,a}, t});
 	ee->edges.push_back({{-a,-a}, {-a,a}, t});
@@ -80,7 +84,7 @@ int main()
 	{
 		Ball* b = new Ball(v2f{0, i*1.5f});
 		world.balls.push_back(b);
-		if(i) world.joints.push_back(new SpringJoint(b, world.balls[i-1], 2.1, 10));
+		if(i) world.joints.push_back(new StiffJoint(b, world.balls[i-1], 2.5));
 	}
 
 	using namespace shitrndr;
@@ -105,7 +109,7 @@ int main()
 			if(Input::getMB(3)) e.b = mp;
 		}
 
-		world.update(FIX_PACE?FIXED_STEP:d, 8);
+		world.update(FIX_PACE?FIXED_STEP:d, 4);
 
 		SetColour({255,150,150,255});
 		for(auto b : world.balls)
@@ -116,15 +120,15 @@ int main()
 		
 		for(auto j : world.joints)
 		{
-			auto sj = dynamic_cast<SpringJoint*>(j);
-			if(!j) continue;
+			auto sj = dynamic_cast<StiffJoint*>(j);
+			if(!sj) continue;
 			vec2<int> pa = toScreen(sj->a->pos);
 			vec2<int> pb = toScreen(sj->b->pos);
 			SetColour({255,0,255,150});
 			SDL_RenderDrawLine(ren, pa.x, pa.y, pb.x, pb.y);
 
 			v2f m = (sj->a->pos + sj->b->pos)/2;
-			v2f n = (sj->a->pos - sj->b->pos).normalised(), t = {n.y, n.x};
+			v2f n = (sj->a->pos - sj->b->pos).normalised(), t = {-n.y, n.x};
 			pa = toScreen(m-n*sj->target_length/2)+t*10;
 			pb = toScreen(m+n*sj->target_length/2)+t*10;
 
