@@ -1,9 +1,10 @@
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include "effectors.h"
-#include "joints.h"
 #include "shitrndr/src/shitrndr.h"
 
 #include "ballet.h"
@@ -65,6 +66,31 @@ struct EffEdge : Effector
 	}
 };
 
+std::vector<Ball*> genMesh(const v2f& pos, const std::vector<v2f> verts, World* w)
+{
+	std::vector<Ball*> balls;
+	for(auto v : verts)
+	{
+		Ball* b = new Ball(pos+v, .5, .5);
+		w->balls.push_back(b);
+		for(Ball* b_ : balls)
+			w->joints.push_back(new StiffJoint{b, b_, (b->pos-b_->pos).getLength()});
+		balls.push_back(b);
+	}
+	return balls;
+}
+std::vector<Ball*> genGon(const v2f& pos, size_t n, float s, World* w)
+{
+	std::vector<v2f> verts;
+	for(float i = 0; i != n; i++)
+	{
+		float a = i/n*M_PI*2;
+		verts.push_back({std::cos(a)*s, std::sin(a)*s});
+	}
+	return genMesh(pos, verts, w);
+}
+
+Ball* selb;
 int main()
 {
 	World world;
@@ -86,6 +112,9 @@ int main()
 		world.balls.push_back(b);
 		if(i) world.joints.push_back(new StiffJoint(b, world.balls[i-1], 2.5));
 	}
+	for(auto i = 0; i != 10; i++)
+		genGon({i*4.f-15, -2}, std::rand()%3+3, std::rand()%3+2, &world);
+
 
 	using namespace shitrndr;
 	init("ballet demo", 480, 480, 1, 0);
@@ -94,19 +123,24 @@ int main()
 	onRender = [&world, &e, ee](double d, double t)
 	{
 		v2f mp = toSpace(Input::getMP());
-		//world.balls[0]->teleport({std::sin(world.time), -2});
-		if(!Input::getKey(SDLK_LSHIFT))
-		{
-			if(Input::getMB(1))
-				world.balls[world.balls.size()-1]->teleport(mp);
-				//world.balls[0]->accelerate((mp-world.balls[0]->pos).normalised()*1000);
-			if(Input::getMB(3))
-				world.balls[0]->teleport(mp);
-		}
-		else
+		if(Input::getKey(SDLK_LSHIFT))
 		{
 			if(Input::getMB(1)) e.a = mp;
 			if(Input::getMB(3)) e.b = mp;
+		}
+		else if(Input::getMB(1))
+				selb->teleport(mp);
+		else
+		{
+			v2f mp = toSpace(Input::getMP());
+			float md = MAXFLOAT;
+			for(auto b : world.balls)
+			{
+				float d = (mp-b->pos).getLengthSquare();
+				if(d>md) continue;
+				selb = b;
+				md = d;
+			}
 		}
 
 		world.update(FIX_PACE?FIXED_STEP:d, 4);
@@ -116,6 +150,12 @@ int main()
 		{
 			vec2<int> bp = toScreen(b->pos);
 			FillCircle(bp.x, bp.y, b->r*PS);
+		}
+		if(selb)
+		{
+			SetColour({150,150,255,255});
+			vec2<int> bp = toScreen(selb->pos);
+			FillCircle(bp.x, bp.y, selb->r*PS);
 		}
 		
 		for(auto j : world.joints)
