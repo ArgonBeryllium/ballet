@@ -13,7 +13,7 @@ struct Ball
 	Ball(const v2f& pos_ = {0,0}, float r_ = 1, float mass_ = 1, const v2f& iv = {0,0}) :
 		pos(pos_), p_pos(pos-iv), r(r_), inv_mass(mass_?1/mass_:0) {}
 
-	v2f getVel() const;
+	v2f getFrameVel() const;
 
 	void update(float d);
 	void accelerate(const v2f& a);

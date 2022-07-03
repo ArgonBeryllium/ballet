@@ -1,10 +1,10 @@
 #include "ball.h"
 
-v2f Ball::getVel() const { return pos-p_pos; }
+v2f Ball::getFrameVel() const { return pos-p_pos; }
 
 void Ball::update(float d)
 {
-	v2f vel = getVel();
+	v2f vel = getFrameVel();
 	p_pos = pos;
 	pos += vel + acc*d*d/2;
 	acc *= 0;
