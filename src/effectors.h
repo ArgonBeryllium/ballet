@@ -9,7 +9,7 @@ struct Effector
 };
 struct EffGravity : Effector
 {
-	v2f g = {0, 16000};
+	v2f g = {0, 160};
 
 	void apply(std::vector<Ball*>& balls, float d) override;
 };

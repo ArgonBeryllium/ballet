@@ -80,7 +80,7 @@ int main()
 	{
 		Ball* b = new Ball(v2f{0, i*1.5f});
 		world.balls.push_back(b);
-		if(i) world.joints.push_back(new SpringJoint(b, world.balls[i-1], 2, 20));
+		if(i) world.joints.push_back(new SpringJoint(b, world.balls[i-1], 2.1, 10));
 	}
 
 	using namespace shitrndr;
@@ -104,11 +104,8 @@ int main()
 			if(Input::getMB(1)) e.a = mp;
 			if(Input::getMB(3)) e.b = mp;
 		}
-		if(Input::getKey(SDLK_r))
-			for(auto b : world.balls)
-				b->p_pos = b->pos;
 
-		world.update(FIX_PACE?FIXED_STEP:d, 4);
+		world.update(FIX_PACE?FIXED_STEP:d, 8);
 
 		SetColour({255,150,150,255});
 		for(auto b : world.balls)

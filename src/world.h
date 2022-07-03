@@ -9,6 +9,6 @@ struct World
 	std::vector<Ball*> balls;
 	std::vector<Joint*> joints;
 	std::vector<Effector*> effectors;
-	float time;
+	float time = 0;
 	void update(float d, unsigned int iters = 1);
 };
