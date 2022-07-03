@@ -12,3 +12,15 @@ void SpringJoint::apply(float delta)
 	a->pos += t*delta*a->inv_mass;
 	b->pos -= t*delta*b->inv_mass;
 }
+
+void StiffJoint::apply(float delta)
+{
+	v2f pd = b->pos-a->pos;
+	float pdl = pd.getLength();
+	float ld = pdl-target_length;
+	v2f pdn = pd/pdl;
+
+	v2f t = pdn*ld/(a->getMass()+b->getMass())/2;
+	a->pos += t*b->getMass();
+	b->pos -= t*a->getMass();
+}

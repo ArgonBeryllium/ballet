@@ -16,3 +16,12 @@ struct SpringJoint : Joint
 
 	void apply(float delta) override;
 };
+struct StiffJoint : Joint
+{
+	Ball* a, *b;
+	float target_length;
+	StiffJoint(Ball* a_, Ball* b_, float tl_ = 5) :
+		a(a_), b(b_), target_length(tl_) {}
+
+	void apply(float delta) override;
+};
