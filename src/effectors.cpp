@@ -1,5 +1,6 @@
 #include "effectors.h"
 #include "ball.h"
+#include <iostream>
 
 void EffGravity::apply(std::vector<Ball *> &balls, float d)
 {
@@ -35,9 +36,10 @@ void EffCollision::apply(std::vector<Ball *> &balls, float d)
 					return;
 				}
 
+				//TODO fix this
 				v2f c = (_b1->pos + _b2->pos)/2;
-				_b1->pos = c + b2m/ms*n*rs;
-				_b2->pos = c - b1m/ms*n*rs;
+				_b1->pos = c + .5*n*rs;
+				_b2->pos = c - .5*n*rs;
 			}
 		}
 }
