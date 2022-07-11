@@ -1,5 +1,5 @@
 CXX=clang++
-LIBS=-lSDL2
+LIBS=-lSDL2 -lSDL2_ttf
 FLAGS=--std=c++17 -g
 
 TEST_SOURCE=src/*.cpp

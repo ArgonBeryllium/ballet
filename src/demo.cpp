@@ -5,11 +5,12 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include "joints.h"
 #include "shitrndr/src/shitrndr.h"
 
 #include "ballet.h"
-
-inline float frand() { return float(std::rand()) / float(RAND_MAX); }
+#define DEBUG_TEXT
+#include "utils.h"
 
 constexpr bool FIX_PACE = true;
 constexpr float EXPECTED_FPS = 60, FIXED_STEP = 1/EXPECTED_FPS;
@@ -66,7 +67,7 @@ struct EffEdge : Effector
 	}
 };
 
-std::vector<Ball*> genMesh(const v2f& pos, const std::vector<v2f> verts, World* w)
+std::vector<Ball*> genMesh(World* w, const std::vector<v2f>& verts, const v2f& pos = {})
 {
 	std::vector<Ball*> balls;
 	for(auto v : verts)
@@ -79,15 +80,44 @@ std::vector<Ball*> genMesh(const v2f& pos, const std::vector<v2f> verts, World* 
 	}
 	return balls;
 }
-std::vector<Ball*> genGon(const v2f& pos, size_t n, float s, World* w)
+std::vector<Ball*> genGon(World* w, size_t n = 4, const v2f& pos = {}, float s = 5)
 {
 	std::vector<v2f> verts;
 	for(float i = 0; i != n; i++)
 	{
-		float a = i/n*M_PI*2;
+		float a = i/n*M_PI*2+M_PI_2;
 		verts.push_back({std::cos(a)*s, std::sin(a)*s});
 	}
-	return genMesh(pos, verts, w);
+	return genMesh(w, verts, pos);
+}
+std::vector<Ball*> genBlock(World* w, float s = 1, const v2f& pos = {}, const v2f& dim = {5,5}, float mass = 1)
+{
+	std::vector<Ball*> balls;
+	const float m = mass/(dim.x*dim.y/(s*s));
+	const int sw = dim.x/s;
+	const int sh = dim.y/s;
+	int i = 0;
+	for(float y = 0; y < sh; y++)
+	{
+		for(float x = 0; x < sw; x++)
+		{
+			Ball* b = new Ball(pos+v2f(x,y)*s*2.1, s, m);
+			w->balls.push_back(b);
+			balls.push_back(b);
+			const int offsets[4] {-sw-1, -sw, -sw+1, -1};
+			for(int k = 0; k != 4; k++)
+			{
+				int j = i+offsets[k];
+				if(j<0) continue;
+				if(x==0 && (k==3 || k==0)) continue;
+				if(x==sw-1 && k==2) continue;
+				Ball* b_ = balls[j];
+				w->joints.push_back(new StiffJoint{b, b_, (b->pos-b_->pos).getLength()});
+			}
+			i++;
+		}
+	}
+	return balls;
 }
 
 Ball* selb;
@@ -106,22 +136,26 @@ int main()
 	ee->edges.push_back({{a,-a}, {a,a}, t});
 	Edge& e = ee->edges[0];
 
+	/*
 	for(int i = 0; i != 12; i++)
 	{
 		Ball* b = new Ball(v2f{0, i*1.5f});
 		world.balls.push_back(b);
 		if(i) world.joints.push_back(new StiffJoint(b, world.balls[i-1], 2.5));
 	}
-	for(auto i = 0; i != 10; i++)
-		genGon({i*4.f-15, -2}, std::rand()%3+3, std::rand()%3+2, &world);
-
+	for(auto i = 0; i != 5; i++)
+		genGon(&world, std::rand()%3+3, {i*4.f-15, -2}, std::rand()%3+2);
+	*/
+	genBlock(&world, 1, {}, {10, 5});
 
 	using namespace shitrndr;
-	init("ballet demo", 480, 480, 1, 0);
+	init("ballet demo", 720, 720, 1, 0);
 	silentDefs();
 	bg_col = {5,8,15,255};
 	onRender = [&world, &e, ee](double d, double t)
 	{
+		clearDebugLines();
+		printDebugFPS(t);
 		v2f mp = toSpace(Input::getMP());
 		if(Input::getKey(SDLK_LSHIFT))
 		{
@@ -129,10 +163,9 @@ int main()
 			if(Input::getMB(3)) e.b = mp;
 		}
 		else if(Input::getMB(1))
-				selb->teleport(mp);
+				selb->pos = lerp(selb->pos, mp, 5*d);
 		else
 		{
-			v2f mp = toSpace(Input::getMP());
 			float md = MAXFLOAT;
 			for(auto b : world.balls)
 			{
@@ -191,10 +224,18 @@ int main()
 			DrawLine(ea.x-o.x, ea.y-o.y, eb.x-o.x, eb.y-o.y);
 		}
 
+		printDebugLine("balls: "+std::to_string(world.balls.size()));
+		printDebugLine("joints: "+std::to_string(world.joints.size()));
 		if(FIX_PACE && d < FIXED_STEP)
 			SDL_Delay(1000*(FIXED_STEP-d));
 	};
-	onKeyDown = [](const SDL_Keycode& k) { if(k==SDLK_q) std::exit(0); };
+	onKeyDown = [&world](const SDL_Keycode& key)
+	{
+		if(key==SDLK_q) std::exit(0);
+		if(key==SDLK_SPACE)
+			genBlock(&world, 1, toSpace(Input::getMP()));
+	};
+	SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 	loop();
 	return 0;
 }
