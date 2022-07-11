@@ -1,27 +1,27 @@
 #pragma once
 
+struct Ball;
 struct Joint
 {
+	Ball* a, *b;
+	Joint(Ball* a_, Ball* b_) : a(a_), b(b_) {}
 	virtual void apply(float delta) = 0;
 };
 
-struct Ball;
 struct SpringJoint : Joint
 {
-	Ball* a, *b;
 	float target_length, stiffness;
 
 	SpringJoint(Ball* a_, Ball* b_, float tl_ = 5, float stiffness_ = 1) :
-		a(a_), b(b_), target_length(tl_), stiffness(stiffness_) {}
+		Joint(a_, b_), target_length(tl_), stiffness(stiffness_) {}
 
 	void apply(float delta) override;
 };
 struct StiffJoint : Joint
 {
-	Ball* a, *b;
 	float target_length;
 	StiffJoint(Ball* a_, Ball* b_, float tl_ = 5) :
-		a(a_), b(b_), target_length(tl_) {}
+		Joint(a_, b_), target_length(tl_) {}
 
 	void apply(float delta) override;
 };
