@@ -7,7 +7,7 @@ struct Ball
 	v2f acc;
 	float r;
 	float inv_mass;
-	inline float getMass() const { return 1/inv_mass; }
+	inline float getMass() const { return inv_mass?1/inv_mass:0; }
 	inline void setMass(float m) { inv_mass = m?1/m:0; }
 
 	Ball(const v2f& pos_ = {0,0}, float r_ = 1, float mass_ = 1, const v2f& iv = {0,0}) :
