@@ -16,30 +16,28 @@ void EffCollision::apply(std::vector<Ball *> &balls, float d)
 			auto _b1 = *b1.base();
 			auto _b2 = *b2.base();
 
-			float rs = _b1->r + _b2->r;
-			float b1m = _b1->getMass(), b2m = _b2->getMass();
-			float ms = b1m + b2m;
-			v2f n = _b1->pos - _b2->pos;
+			const float rs = _b1->r + _b2->r;
+			const v2f n = _b1->pos - _b2->pos;
+			const float nl = n.getLength();
 
-			if(n.getLengthSquare()<rs*rs)
+			if(nl<rs)
 			{
-				n = n.normalised();
+				const float b1m = _b1->getMass(), b2m = _b2->getMass();
+				const float ms = b1m + b2m;
 				if(!b1m)
 				{
 					if(!b2m) return;
-					_b2->pos = _b1->pos-n*rs;
+					_b2->pos = _b1->pos-n;
 					return;
 				}
 				else if(!b2m)
 				{
-					_b1->pos = _b2->pos+n*rs;
+					_b1->pos = _b2->pos+n;
 					return;
 				}
 
-				//TODO fix this
-				v2f c = (_b1->pos + _b2->pos)/2;
-				_b1->pos = c + .5*n*rs;
-				_b2->pos = c - .5*n*rs;
+				_b1->pos += b2m/ms*n/nl*(rs-nl);
+				_b2->pos -= b1m/ms*n/nl*(rs-nl);
 			}
 		}
 }
